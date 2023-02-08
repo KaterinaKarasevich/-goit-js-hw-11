@@ -1,22 +1,29 @@
 
 import ImagesAPI from './fetchImages.js';
+import LoadMoreBtn from "./components/LoadMoreButton.js";
 import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
-// Дополнительный импорт стилей
+
 import "simplelightbox/dist/simple-lightbox.min.css";
 import './css/styles.css';
 
-//import debounce from 'lodash.debounce';
-
 const imagesAPI = new ImagesAPI();
-console.log(imagesAPI)
+
 
 const form = document.querySelector("#search-form");
 const imagesContainer = document.querySelector(".gallery");
-console.dir( imagesContainer)
 
 
 form.addEventListener("submit", onSubmit);
+const loadMoreBtn = new LoadMoreBtn
+  ({
+    selector: ".load-more",
+    isHidden: true,
+  });
+console.log(loadMoreBtn)
+
+loadMoreBtn.button.addEventListener("click", onLoadMore)
+
 
 function onSubmit(e) {
   e.preventDefault();
@@ -24,18 +31,22 @@ function onSubmit(e) {
   const form = e.currentTarget;
   imagesAPI.searchQuery = form.elements.searchQuery.value.trim();
   console.log(imagesAPI.searchQuery)
+  loadMoreBtn.disable();
+  clearInput()
+  imagesAPI.resetPage()
+  loadMoreBtn.show()
 
   imagesAPI.
-  fetchImages()
-    //.then(({ hits }) => {
-    //console.log(hits)
-    //return hits
-  //})
-  .then(createMarkupImages)
+    fetchImages()
+    //.then(createMarkupImages)
+    .then((images) => {
+      createMarkupImages(images);
+      loadMoreBtn.enable();
+    })
   .catch(error => console.log(error))
   .finally(() => form.reset());
 }
-//{ webformatURL, largeImageURL, tags, likes, views, comments, downloads }
+
 function createMarkupImages(images) {
   const imagesArray = images.hits;;
 
@@ -47,7 +58,7 @@ function createMarkupImages(images) {
     ({ webformatURL, largeImageURL, tags, likes, views, comments, downloads}) =>
       `<div class="photo-card">
       <a class="" href=${largeImageURL}>
-  <img src="${webformatURL}" alt="${tags}" loading="lazy" />
+  <img class ="photo-img" src="${webformatURL}" alt="${tags}" loading="lazy" />
   <div class="info">
     <p class="info-item">
       <b>Likes: ${likes}</b>
@@ -65,7 +76,7 @@ function createMarkupImages(images) {
 </div>
       `)
     .join(" ");
-  imagesContainer.innerHTML = markUpImage
+  imagesContainer.insertAdjacentHTML("beforeend", markUpImage)
   gallery.refresh();
 }
 
@@ -76,11 +87,27 @@ function createMarkupImages(images) {
 
 //}
 
-//4.  Работа с библиотекой SimpleLightbox для создания галереи картинок
+function onLoadMore() {
+  loadMoreBtn.disable();
+  imagesAPI.
+  fetchImages()
+  //.then(createMarkupImages)
+    .then((images) => {
+      createMarkupImages(images);
+      loadMoreBtn.enable();
+    })
+  .catch(error => console.log(error))
+  
+}
+
+function clearInput() {
+  document.querySelector(".gallery").innerHTML = "";
+}
+
 const gallery = new SimpleLightbox('.gallery a', {
     captions: true,
     captionsData: "alt",
-    captionDelay: 500,
+    captionDelay: 300,
     close: true,
     loop: true,
 });

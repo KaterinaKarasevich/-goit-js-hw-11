@@ -11,6 +11,7 @@ body {
   color: #212121;
   line-height: 1.5;
 }
+
 input {
   padding: 10px 20px;
   border-radius: 15px;
@@ -18,8 +19,51 @@ input {
   border: 2px solid black;
 }
 
+button:disabled {
+  background-color: #c1c1c1;
+  cursor: not-allowed;
+}
+
+button.hidden {
+  display: none;
+}
+
+.gallery {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photo-card {
+  width: 40%;
+  text-align: center;
+  border-radius: 15px;
+  background-color: #c1c1c1;
+  padding: 20px;
+  text-decoration: none;
+}
+.photo-img {
+  width: 100%;
+  border-radius: 15px;
+}
+
+a {
+  text-decoration: none;
+  font-family: sans-serif;
+  color: black;
+}
+
 button {
-  background-color: lightblue;
+  margin: 0 auto;
+  margin-top: 30px;
+  display: block;
+  border-radius: 15px;
+  padding: 10px 20px;
+  font-size: 20px;
+  background-color: blue;
   color: white;
   cursor: pointer;
 }
