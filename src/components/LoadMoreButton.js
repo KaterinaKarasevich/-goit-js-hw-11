@@ -9,13 +9,11 @@ export default class LoadMoreBtn {
     return document.querySelector(selector);
   }
 
-  enable() {
-    this.button.disabled = false;
+   stopLoading() {
     this.button.textContent = "Load More";
   }
 
-  disable() {
-    this.button.disabled = true;
+  loading() {
     this.button.textContent = "Loading...";
   }
 

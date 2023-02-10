@@ -1,60 +1,59 @@
 
 import ImagesAPI from './fetchImages.js';
 import LoadMoreBtn from "./components/LoadMoreButton.js";
-import Notiflix from 'notiflix';
+import { Notify } from 'notiflix';
 import SimpleLightbox from "simplelightbox";
-
 import "simplelightbox/dist/simple-lightbox.min.css";
 import './css/styles.css';
 
 const imagesAPI = new ImagesAPI();
-
-
-const form = document.querySelector("#search-form");
-const imagesContainer = document.querySelector(".gallery");
-
-
-form.addEventListener("submit", onSubmit);
 const loadMoreBtn = new LoadMoreBtn
   ({
     selector: ".load-more",
     isHidden: true,
   });
-console.log(loadMoreBtn)
 
+const form = document.querySelector("#search-form");
+const imagesContainer = document.querySelector(".gallery");
+
+form.addEventListener("submit", onSubmit);
 loadMoreBtn.button.addEventListener("click", onLoadMore)
 
 
-function onSubmit(e) {
+async function onSubmit(e) {
   e.preventDefault();
 
   const form = e.currentTarget;
   imagesAPI.searchQuery = form.elements.searchQuery.value.trim();
-  console.log(imagesAPI.searchQuery)
-  loadMoreBtn.disable();
-  clearInput()
+  if (imagesAPI.searchQuery === "") {
+    Notify.warning('Input must not be empty');
+    clearInput()
+    return;
+  }
   imagesAPI.resetPage()
-  loadMoreBtn.show()
 
-  imagesAPI.
-    fetchImages()
-    //.then(createMarkupImages)
-    .then((images) => {
-      createMarkupImages(images);
-      loadMoreBtn.enable();
-    })
-  .catch(error => console.log(error))
-  .finally(() => form.reset());
+  try {
+    const { hits, totalHits } = await imagesAPI.fetchImages()
+    
+    if (totalHits === 0) {
+        Notify.warning('Sorry, there are no images matching your search query. Please try again.');
+  
+        clearInput()
+        loadMoreBtn.hide();
+        return;
+    }
+    Notify.success(`Hooray! We found ${totalHits} images.`);
+    createMarkupImages(hits);
+    loadMoreBtn.show();
+  } catch (error) {
+    Notify.failure('Sorry, something went wrong');
+  }
+  form.reset();
 }
+   
 
 function createMarkupImages(images) {
-  const imagesArray = images.hits;;
-
-  if (imagesArray.length === 0) {
-    Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
-  }
-
-  const markUpImage = imagesArray.map(
+  const markUpImage = images.map(
     ({ webformatURL, largeImageURL, tags, likes, views, comments, downloads}) =>
       `<div class="photo-card">
       <a class="" href=${largeImageURL}>
@@ -80,25 +79,23 @@ function createMarkupImages(images) {
   gallery.refresh();
 }
 
-//function renderMarkupImages(hits) {
+async function onLoadMore() { 
+    loadMoreBtn.loading()
+   try {
+      const {hits} = await imagesAPI.fetchImages()
+      createMarkupImages(hits);
+      loadMoreBtn.stopLoading()
 
- //const markUpImage = createMarkupImages(hits)
- // gallery.innerHTML = markUpImage
+     if (hits.length < 40) {
+       loadMoreBtn.hide();
+       Notify.info('We are sorry, but you have reached the end of search results.');
+     }
 
-//}
-
-function onLoadMore() {
-  loadMoreBtn.disable();
-  imagesAPI.
-  fetchImages()
-  //.then(createMarkupImages)
-    .then((images) => {
-      createMarkupImages(images);
-      loadMoreBtn.enable();
-    })
-  .catch(error => console.log(error))
-  
+  } catch (error) {
+      Notify.failure('Sorry, something is wrong');
+  }
 }
+
 
 function clearInput() {
   document.querySelector(".gallery").innerHTML = "";
